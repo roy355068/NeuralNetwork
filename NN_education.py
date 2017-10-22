@@ -25,6 +25,8 @@ class Data(object):
 		x = np.array(self.data)
 		self.normalized = stats.zscore(x)
 
+		trainingMean = np.mean(x)
+		trainingStd = np.std(x)
 		tempLabel = []
 		with open(label, 'r') as f:
 			for line in f:
@@ -43,7 +45,8 @@ class Data(object):
 					tempTest[i] = float(tempTest[i])
 				testData.append(tempTest)
 		testing = np.array(testData)
-		self.normalizedTestData = stats.zscore(testing)
+		self.normalizedTestData = (testing - trainingMean) / trainingStd
+		# self.normalizedTestData = stats.zscore(testing)
 
 class NeuralNetwork(object):
 	def __init__(self, data):
@@ -62,21 +65,26 @@ class NeuralNetwork(object):
 		# Make the random generated "fixed"
 		np.random.seed(30)
 		self.weightsInputToHidden = np.random.uniform(
-											# low = -1/(dim ** 0.5), 
-											# high = 1/(dim ** 0.5), 
-											low = -4 * ((6 / (dim + num)) ** 0.5),
-											high = 4 * ((6 / (dim + num)) ** 0.5),
+											low = -1/(dim ** 0.5), 
+											high = 1/(dim ** 0.5), 
+											# low = -4 * ((6.0 / (dim + num)) ** 0.5),
+											# high = 4 * ((6.0 / (dim + num)) ** 0.5),
 											size = (num, dim))
 		self.weightsHiddenToOutput = np.random.uniform(
-											low = -4 * ((6 / (1 + num)) ** 0.5), 
-											high = 4 * ((6 / (1 + num)) ** 0.5),
+											low = -4 * ((6.0 / (1 + num)) ** 0.5), 
+											high = 4 * ((6.0 / (1 + num)) ** 0.5),
 											size = (1, num))
+		# print self.weightsInputToHidden[0][0]
+		# print self.weightsInputToHidden
+		# for i in xrange(len(self.weightsInputToHidden)):
+		# 	print self.weightsInputToHidden[i]
+		# print self.weightsHiddenToOutput
 
 
 	def forward(self):
 		prevMSE = float('inf')
 		# 5000 1:20 MSE = 3585
-		for iteration in xrange(5001):
+		for iteration in xrange(7001):
 		# while prevMSE >= self.MSE and prevMSE - self.MSE > 0.00001:
 			W_2 = np.array([[0.0], [0.0], [0.0]])
 			W_1 = np.array([[0.0 for _ in xrange(3)] for _ in xrange(5)])
@@ -105,8 +113,8 @@ class NeuralNetwork(object):
 				gradient_1 = trainingData.dot(new)
 				W_1 += gradient_1
  
-				# if prevMSE < self.MSE:
-				# 	raise ValueError("BOOOOOOOOOOOOOOOOOOOOM")
+				if prevMSE < self.MSE:
+					raise ValueError("BOOOOOOOOOOOOOOOOOOOOM")
 			W_1 /= 400.0
 			W_2 /= 400.0
 			prevMSE = self.MSE
@@ -119,11 +127,12 @@ class NeuralNetwork(object):
 
 			self.weightsInputToHidden -= learningRate * W_1.transpose()
 			self.weightsHiddenToOutput -= learningRate * W_2.transpose()
-			if iteration % 100 == 0:
-				print iteration, self.MSE
-				print 
-				if iteration == 10000:
-					print second, self.trainingLabels[i]
+			# if iteration % 100 == 0:
+			# 	print iteration, 0.5 * self.MSE[0]
+				# print 
+			# if iteration == 5000:
+			# 	print second, self.trainingLabels[i]
+			print 0.5 * self.MSE[0]
 			self.MSE = 0
 		
 	def sigmoid(self, x):
@@ -131,20 +140,22 @@ class NeuralNetwork(object):
 
 	def startTraining(self):
 		self.forward()
-		print 
-		print self.weightsInputToHidden
-		print 
-		print self.weightsHiddenToOutput
+		# print 
+		# print self.weightsInputToHidden
+		# print 
+		# print self.weightsHiddenToOutput
 		print "TRAINING COMPLETED! NOW PREDICTING."
 		self.startPredicting()
 
 	def startPredicting(self):
-		tempLabel = []
-		with open('education_dev_keys.txt', 'r') as f:
-			for line in f:
-				tempLabel.append(float(line.strip()))
-		labels = np.array(tempLabel)
-		testMSE = 0
+		# tempLabel = []
+		# with open('education_dev_keys.txt', 'r') as f:
+		# 	for line in f:
+		# 		tempLabel.append(float(line.strip()))
+		# labels = np.array(tempLabel)
+		# testMSE = 0
+
+		# Predict the outcome of test data
 		for i in xrange(len(self.normalizedTestData)):
 			first = np.dot(self.weightsInputToHidden, self.normalizedTestData[i])
 			# tempFirst is the values that hasn't been "sigmoided"
@@ -154,9 +165,13 @@ class NeuralNetwork(object):
 
 			# first stores the data that has been tranformed
 			second = np.dot(self.weightsHiddenToOutput, first)
-			print second, labels[i]
-			testMSE += ((second - labels[i]) ** 2)
-		print testMSE
+			print "%0.2f" % second[0]
+
+
+
+			# print second[0], labels[i]
+			# testMSE += ((second - labels[i]) ** 2)
+		# print testMSE
 
 
 if __name__ == '__main__':

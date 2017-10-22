@@ -2,7 +2,7 @@
 print "a"
 
 #2
-print "b"
+print "a"
 
 #3
 print "yes"
@@ -17,13 +17,12 @@ print "yes"
 print "no"
 
 #7 ?
-print "no"
+print "yes"
 
 #8
 print "b"
 
 #9 ?
-# Bias neuron
 print "25"
 
 #10 ?
